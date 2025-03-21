@@ -82,6 +82,7 @@ where
     clip: bool,
     class: Theme::Class<'a>,
     status: Option<Status>,
+    hover_interaction: mouse::Interaction
 }
 
 enum OnPress<'a, Message> {
@@ -119,6 +120,7 @@ where
             clip: false,
             class: Theme::default(),
             status: None,
+            hover_interaction: mouse::Interaction::Pointer
         }
     }
 
@@ -137,6 +139,12 @@ where
     /// Sets the [`Padding`] of the [`Button`].
     pub fn padding<P: Into<Padding>>(mut self, padding: P) -> Self {
         self.padding = padding.into();
+        self
+    }
+
+    /// Sets the [`mouse::Interaction`] of the [`Button`] when hovered.
+    pub fn hover_interaction(mut self, hover_interaction: mouse::Interaction) -> Self {
+        self.hover_interaction = hover_interaction;
         self
     }
 
@@ -421,7 +429,7 @@ where
         let is_mouse_over = cursor.is_over(layout.bounds());
 
         if is_mouse_over && self.on_press.is_some() {
-            mouse::Interaction::Pointer
+            self.hover_interaction
         } else {
             mouse::Interaction::default()
         }
