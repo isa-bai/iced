@@ -96,6 +96,8 @@ where
     height: f32,
     class: Theme::Class<'a>,
     status: Option<Status>,
+    hover_interaction: mouse::Interaction,
+    drag_interaction: mouse::Interaction,
 }
 
 impl<'a, T, Message, Theme> Slider<'a, T, Message, Theme>
@@ -143,6 +145,8 @@ where
             height: Self::DEFAULT_HEIGHT,
             class: Theme::default(),
             status: None,
+            hover_interaction: mouse::Interaction::Grab,
+            drag_interaction: mouse::Interaction::Grabbing,
         }
     }
 
@@ -162,6 +166,18 @@ where
     /// the default on_change message could create too many events.
     pub fn on_release(mut self, on_release: Message) -> Self {
         self.on_release = Some(on_release);
+        self
+    }
+
+    /// Sets the [`mouse::Interaction`] of the [`Slider`] when hovered.
+    pub fn hover_interaction(mut self, hover_interaction: mouse::Interaction) -> Self {
+        self.hover_interaction = hover_interaction;
+        self
+    }
+
+    /// Sets the [`mouse::Interaction`] of the [`Slider`] when dragging.
+    pub fn drag_interaction(mut self, drag_interaction: mouse::Interaction) -> Self {
+        self.drag_interaction = drag_interaction;
         self
     }
 
@@ -536,9 +552,9 @@ where
         let is_mouse_over = cursor.is_over(bounds);
 
         if state.is_dragging {
-            mouse::Interaction::Grabbing
+            self.drag_interaction
         } else if is_mouse_over {
-            mouse::Interaction::Grab
+            self.hover_interaction
         } else {
             mouse::Interaction::default()
         }
