@@ -15,11 +15,12 @@ pub fn main() -> iced::Result {
     #[cfg(not(target_arch = "wasm32"))]
     tracing_subscriber::fmt::init();
 
-    iced::application(Todos::title, Todos::update, Todos::view)
+    iced::application(Todos::new, Todos::update, Todos::view)
         .subscription(Todos::subscription)
+        .title(Todos::title)
         .font(Todos::ICON_FONT)
         .window_size((500.0, 800.0))
-        .run_with(Todos::new)
+        .run()
 }
 
 #[derive(Debug)]
@@ -482,7 +483,6 @@ enum LoadError {
 
 #[derive(Debug, Clone)]
 enum SaveError {
-    File,
     Write,
     Format,
 }
@@ -504,15 +504,7 @@ impl SavedState {
     }
 
     async fn load() -> Result<SavedState, LoadError> {
-        use async_std::prelude::*;
-
-        let mut contents = String::new();
-
-        let mut file = async_std::fs::File::open(Self::path())
-            .await
-            .map_err(|_| LoadError::File)?;
-
-        file.read_to_string(&mut contents)
+        let contents = tokio::fs::read_to_string(Self::path())
             .await
             .map_err(|_| LoadError::File)?;
 
@@ -520,31 +512,25 @@ impl SavedState {
     }
 
     async fn save(self) -> Result<(), SaveError> {
-        use async_std::prelude::*;
-
         let json = serde_json::to_string_pretty(&self)
             .map_err(|_| SaveError::Format)?;
 
         let path = Self::path();
 
         if let Some(dir) = path.parent() {
-            async_std::fs::create_dir_all(dir)
+            tokio::fs::create_dir_all(dir)
                 .await
-                .map_err(|_| SaveError::File)?;
+                .map_err(|_| SaveError::Write)?;
         }
 
         {
-            let mut file = async_std::fs::File::create(path)
-                .await
-                .map_err(|_| SaveError::File)?;
-
-            file.write_all(json.as_bytes())
+            tokio::fs::write(path, json.as_bytes())
                 .await
                 .map_err(|_| SaveError::Write)?;
         }
 
         // This is a simple way to save at most once every couple seconds
-        async_std::task::sleep(std::time::Duration::from_secs(2)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
         Ok(())
     }
@@ -570,7 +556,7 @@ impl SavedState {
     }
 
     async fn save(self) -> Result<(), SaveError> {
-        let storage = Self::storage().ok_or(SaveError::File)?;
+        let storage = Self::storage().ok_or(SaveError::Write)?;
 
         let json = serde_json::to_string_pretty(&self)
             .map_err(|_| SaveError::Format)?;

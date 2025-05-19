@@ -8,10 +8,9 @@ use iced::window;
 use iced::{Element, Fill, Point, Rectangle, Renderer, Subscription, Theme};
 
 pub fn main() -> iced::Result {
-    iced::application("Arc - Iced", Arc::update, Arc::view)
+    iced::application(Arc::new, Arc::update, Arc::view)
         .subscription(Arc::subscription)
         .theme(|_| Theme::Dark)
-        .antialiasing(true)
         .run()
 }
 
@@ -26,6 +25,13 @@ enum Message {
 }
 
 impl Arc {
+    fn new() -> Self {
+        Arc {
+            start: Instant::now(),
+            cache: Cache::default(),
+        }
+    }
+
     fn update(&mut self, _: Message) {
         self.cache.clear();
     }
@@ -36,15 +42,6 @@ impl Arc {
 
     fn subscription(&self) -> Subscription<Message> {
         window::frames().map(|_| Message::Tick)
-    }
-}
-
-impl Default for Arc {
-    fn default() -> Self {
-        Arc {
-            start: Instant::now(),
-            cache: Cache::default(),
-        }
     }
 }
 

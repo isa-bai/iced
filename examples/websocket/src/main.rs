@@ -7,9 +7,9 @@ use iced::{Center, Element, Fill, Subscription, Task, color};
 use std::sync::LazyLock;
 
 pub fn main() -> iced::Result {
-    iced::application("WebSocket - Iced", WebSocket::update, WebSocket::view)
+    iced::application(WebSocket::new, WebSocket::update, WebSocket::view)
         .subscription(WebSocket::subscription)
-        .run_with(WebSocket::new)
+        .run()
 }
 
 struct WebSocket {
@@ -104,6 +104,7 @@ impl WebSocket {
             )
             .id(MESSAGE_LOG.clone())
             .height(Fill)
+            .spacing(10)
             .into()
         };
 
